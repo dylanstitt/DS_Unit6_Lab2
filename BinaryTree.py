@@ -78,7 +78,6 @@ class BinaryTree:
         """Convert root to string"""
         return str(self.__root)
 
-    ####################################################################################################################################################
     def __validate(self, position):
         """Return node in specified position or raise exception if position does not belong to list or not a position"""
         if type(position) != self.Position:
@@ -88,7 +87,6 @@ class BinaryTree:
             raise ValueError("Position does not belong to tree")
 
         return position._Position__node
-    ####################################################################################################################################################
 
     def __make_position(self, node):
         """Return new position object for a given node"""
@@ -138,17 +136,6 @@ class BinaryTree:
         self.__size += 1
         return self.__make_position(node)
 
-    def replace(self, position, element):
-        """Replaces the contents of the node at the given position"""
-        node = self.__validate(position)
-        oldVal = node._BinaryNode__value
-        node._BinaryNode__value = element
-        return oldVal
-
-    def delete(self, position):
-        """Removes a node from the tree"""
-        pass
-
     def is_root(self, position):
         """Determines if the given position is the root of the tree"""
         return self.__validate(position) is self.__root
@@ -156,40 +143,26 @@ class BinaryTree:
     def is_leaf(self, position):
         """Determines if the given position is a leaf"""
         node = self.__validate(position)
-        if node._BinaryNode__left is None and node._BinaryNode__right is None:
-            return True
-        return False
+        return node._BinaryNode__left is None and node._BinaryNode__right is None
 
     def is_ancestor(self, ancestor, descendant):
         """Determines if one node is an ancestor of another node"""
-        if self.__validate(ancestor) is self.__validate(descendant):
-            return False
+        descendant = self.__validate(descendant)
+        ancestor = self.__validate(ancestor)
 
-        if self.are_siblings(ancestor, descendant):
-            return False
-        
-        if self.is_root(descendant):
-            return False
-        return True
+        while descendant is not self.__root:
+            if descendant._BinaryNode__parent is ancestor:
+                return True
+            descendant = descendant._BinaryNode__parent
+        return False
 
     def are_siblings(self, sibling1, sibling2):
         """Determines if two nodes are siblings"""
-        if self.__validate(sibling1) is self.__validate(sibling2):
+        if self.__validate(sibling1) is self.__validate(sibling2) or self.is_root(sibling1) or self.is_root(sibling2):
             return False
-
-        if self.is_root(sibling1) or self.is_root(sibling2):
-            return False
-
         if self.__validate(sibling2)._BinaryNode__parent is self.__validate(sibling1)._BinaryNode__parent:
             return True
         return False
-
-    def num_children(self, position):
-        """Returns the number of children of the given position"""
-        children = self.get_children(position)
-        if children is None:
-            return 0
-        return len(children)
 
     def get_root(self):
         """Returns the root of the tree in position"""
@@ -207,6 +180,16 @@ class BinaryTree:
         """Returns the parent of the given position"""
         return self.__make_position(self.__validate(position)._BinaryNode__parent)
 
+    def num_children(self, position):
+        """Returns the number of children of the given position"""
+        children = self.get_children(position)
+        return 0 if children is None else len(children)
+
+    def get_depth(self, position):
+        """Returns the depth of the given position"""
+        ancestors = self.get_ancestors(position)
+        return 0 if ancestors is None else len(ancestors)
+
     def get_ancestors(self, position):
         """Returns a list of ancestors of the given position"""
         ancestors = []
@@ -219,8 +202,8 @@ class BinaryTree:
             node = node._BinaryNode__parent
             if node is None:
                 break
-            ancestors.append(self.__make_position(node))
 
+            ancestors.append(self.__make_position(node))
         return ancestors
 
     def get_children(self, position):
@@ -249,9 +232,44 @@ class BinaryTree:
             return self.__make_position(node._BinaryNode__parent._BinaryNode__right)
         return self.__make_position(node._BinaryNode__parent._BinaryNode__left)
 
-    def get_depth(self, position):
-        """Returns the depth of the given position"""
-        ancestors = self.get_ancestors(position)
-        if ancestors is None:
-            return 0
-        return len(ancestors)
+    def replace(self, position, element):
+        """Replaces the contents of the node at the given position"""
+        node = self.__validate(position)
+        oldVal = node._BinaryNode__value
+        node._BinaryNode__value = element
+        return oldVal
+
+    def delete(self, position):
+        """Removes a node from the tree"""
+        node = self.__validate(position)
+        children = self.num_children(position)
+
+        if children == 2:
+            raise Exception("Cannot delete node with two children")
+
+        elif children == 1:
+            child = node._BinaryNode__left if node._BinaryNode__left is not None else node._BinaryNode__right
+
+            if node is self.__root:
+                self.__root = child
+            elif node._BinaryNode__left is not None:
+                node._BinaryNode__parent._BinaryNode__set_left(child)
+                child._BinaryNode__set_parent(node._BinaryNode__parent)
+            else:
+                node._BinaryNode__parent._BinaryNode__set_right(child)
+                child._BinaryNode__set_parent(node._BinaryNode__parent)
+
+        else:
+            if node is self.__root:
+                self.__root = None
+            elif node._BinaryNode__parent._BinaryNode__left is node:
+                node._BinaryNode__parent._BinaryNode__set_left(None)
+            else:
+                node._BinaryNode__parent._BinaryNode__set_right(None)
+
+        self.__size -= 1
+        node._BinaryNode__set_parent(node)
+
+        if self.__size == 0:
+            self.__root = None
+        return node._BinaryNode__value
