@@ -268,8 +268,8 @@ class BinaryTree:
                 node._BinaryNode__parent._BinaryNode__set_right(None)
 
         self.__size -= 1
-        node._BinaryNode__set_parent(node)
-
         if self.__size == 0:
             self.__root = None
+
+        node._BinaryNode__set_parent(node)
         return node._BinaryNode__value
